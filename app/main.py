@@ -13,6 +13,7 @@ from sqlmodel import SQLModel, create_engine, Session
 
 from app import models, crud, scheduler, auth
 from app.config import DATABASE_URL
+from fastapi import Form 
 
 # --- App & DB setup ---
 engine = create_engine(DATABASE_URL, echo=False)
@@ -42,27 +43,25 @@ def get_session():
 
 # --- Prospects API & HTMX endpoints ---
 
-@app.post("/prospects/", response_class=HTMLResponse)
-async def create_prospect(
-    request: Request,
+@app.post("/prospects/")
+def create_prospect(
+    name: str = Form(...),
+    email: str = Form(...),
+    language: str = Form(...),
+    title: str = Form(""),
     session: Session = Depends(get_session),
     user=Depends(auth.get_current_user),
 ):
-    content_type = request.headers.get("content-type", "")
-    # JSON client
-    if content_type.startswith("application/json"):
-        data = await request.json()
-        prospect = models.Prospect(
-            user_id=user.id,
-            title=data.get("title"),
-            name=data["name"],
-            email=data["email"],
-            language=data["language"],
-            type_id=None,
-        )
-        prospect = crud.create_prospect(session, prospect)
-        scheduler.schedule_sequence_for_prospect(session, prospect, user.id)
-        return JSONResponse(prospect.dict())
+    data = models.Prospect(name=name, email=email, language=language, title=title, user_id=user.id)
+    prospect = crud.create_prospect(session, data)
+    scheduler.schedule_sequence_for_prospect(session, prospect, user.id)
+    
+    # Return the updated HTML fragment
+    prospects = crud.get_prospects(session, user.id)
+    return templates.TemplateResponse("_prospect_list.html", {
+        "request": Request(scope={}),  # Temporary fix if needed
+        "prospects": prospects
+    })
 
     # HTMX form client
     form = await request.form()
