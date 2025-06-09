@@ -1,10 +1,7 @@
 fastapi
-uvicorn
+uvicorn[standard]
 sqlmodel
+jinja2
+httpx
 python-dotenv
-jinja2
-fastapi-users[sqlalchemy]
-jinja2
-htmx
-piccolo-admin
 

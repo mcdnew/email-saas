@@ -108,5 +108,43 @@ def prospects_page(
     prospects = crud.get_prospects(session, user.id)
     return templates.TemplateResponse(
         "prospects.html",
-        {"request": request, "prospects": prospects},
+        {"request": request, "prospects": prospects, "user": user},
     )
+from fastapi import Form
+
+@app.post("/prospects/", response_class=HTMLResponse)
+def create_prospect_form(
+    name: str = Form(...),
+    email: str = Form(...),
+    session: Session = Depends(get_session),
+    user=Depends(auth.get_current_user)
+):
+    new_prospect = models.Prospect(name=name, email=email, user_id=user.id)
+    session.add(new_prospect)
+    session.commit()
+    session.refresh(new_prospect)
+    scheduler.schedule_sequence_for_prospect(session, new_prospect, user.id)
+    return templates.TemplateResponse("_prospect_list.html", {
+        "request": Request,
+        "prospects": crud.get_prospects(session, user.id),
+        "user": user
+    })
+
+
+@app.delete("/prospects/{prospect_id}", response_class=HTMLResponse)
+def delete_prospect(prospect_id: int, session: Session = Depends(get_session), user=Depends(auth.get_current_user)):
+    crud.delete_prospect(session, prospect_id, user.id)
+    return templates.TemplateResponse("_prospect_list.html", {
+        "request": Request,
+        "prospects": crud.get_prospects(session, user.id),
+        "user": user
+    })
+
+@app.get("/prospects/partial", response_class=HTMLResponse)
+def get_prospect_list_partial(request: Request, session: Session = Depends(get_session), user=Depends(auth.get_current_user)):
+    prospects = crud.get_prospects(session, user.id)
+    return templates.TemplateResponse("_prospect_list.html", {
+        "request": request,
+        "prospects": prospects,
+        "user": user
+    })

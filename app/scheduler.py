@@ -1,12 +1,11 @@
-#What This Does
-#Pulls the delay strategy and working hours from ProspectType
-#Applies:
-#Weekly spacing for the first 4 steps
-#Monthly spacing after that
-#Randomly schedules each email in the 09:00–19:00 window
-#Skips weekends
-#Persists to the database
-
+# What This Does:
+# Pulls the delay strategy and working hours from ProspectType
+# Applies:
+#   - Weekly spacing for the first 4 steps
+#   - Monthly spacing after that
+#   - Randomly schedules each email in the 09:00–19:00 window
+#   - Skips weekends
+#   - Persists to the database
 
 from datetime import datetime, timedelta, time, date
 import random
@@ -15,18 +14,15 @@ from sqlmodel import Session, select
 from app.models import ScheduledEmail, Prospect, SequenceStep, ProspectType
 from app.crud import schedule_email
 
-
 def get_next_weekday(start_date: date) -> date:
     while start_date.weekday() > 4:  # Skip Saturday/Sunday
         start_date += timedelta(days=1)
     return start_date
 
-
 def generate_send_time_for_day(day: date, start_hour: int, end_hour: int) -> datetime:
     hour = random.randint(start_hour, end_hour - 1)
     minute = random.randint(0, 59)
     return datetime.combine(day, time(hour, minute))
-
 
 def schedule_sequence_for_prospect(session: Session, prospect: Prospect, user_id: int):
     # Load the prospect type settings

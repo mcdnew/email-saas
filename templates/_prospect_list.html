@@ -1,33 +1,31 @@
-{# templates/_prospect_list.html #}
-<table class="table table-striped">
+<!-- templates/_prospect_list.html -->
+<table class="table table-bordered table-hover bg-white">
   <thead>
     <tr>
-      <th>Title</th>
       <th>Name</th>
       <th>Email</th>
-      <th>Language</th>
+      <th>Created</th>
       <th>Actions</th>
     </tr>
   </thead>
   <tbody>
-    {% for p in prospects %}
+    {% for prospect in prospects %}
     <tr>
-      <td>{{ p.title or "" }}</td>
-      <td>{{ p.name }}</td>
-      <td>{{ p.email }}</td>
-      <td>{{ p.language }}</td>
+      <td>{{ prospect.name }}</td>
+      <td>{{ prospect.email }}</td>
+      <td>{{ prospect.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
       <td>
         <button
-          type="button"
           class="btn btn-sm btn-danger"
-          hx-delete="/prospects/{{ p.id }}"
+          hx-delete="/prospects/{{ prospect.id }}"
           hx-target="#prospect-list"
-          hx-swap="innerHTML"
-        >
-          Delete
-        </button>
+          hx-swap="outerHTML"
+        >Delete</button>
       </td>
     </tr>
     {% endfor %}
+    {% if prospects|length == 0 %}
+    <tr><td colspan="4" class="text-center text-muted">No prospects yet.</td></tr>
+    {% endif %}
   </tbody>
 </table>

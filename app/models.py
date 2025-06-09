@@ -17,16 +17,15 @@ class User(SQLModel, table=True):
 class ProspectType(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
-    name: str  # e.g., 'Startup Founders'
+    name: str
     description: Optional[str] = None
     default_language: Optional[str] = "en"
     default_sequence_id: Optional[int] = Field(default=None, foreign_key="sequence.id")
 
-    # Custom scheduling config (optional)
     max_emails_per_hour: Optional[int] = 10
-    send_window_start: Optional[int] = 9   # 9:00 AM
-    send_window_end: Optional[int] = 18    # 6:00 PM
-    delay_strategy: Optional[str] = "default"  # 'default', 'aggressive', 'slow'
+    send_window_start: Optional[int] = 9
+    send_window_end: Optional[int] = 18
+    delay_strategy: Optional[str] = "default"
 
 
 class Prospect(SQLModel, table=True):
@@ -35,7 +34,7 @@ class Prospect(SQLModel, table=True):
     name: str
     email: str
     language: str
-    type_id: int = Field(foreign_key="prospecttype.id")  # linked to ProspectType
+    type_id: int = Field(foreign_key="prospecttype.id")
     sequence_id: Optional[int] = Field(default=None, foreign_key="sequence.id")
     status: str = "pending"
     last_contacted: Optional[datetime] = None

@@ -4,7 +4,6 @@ from app.models import (
     ScheduledEmail, ProspectType
 )
 
-
 # ---------- PROSPECT TYPE ----------
 
 def create_prospect_type(session: Session, data: ProspectType) -> ProspectType:
@@ -27,6 +26,23 @@ def create_prospect(session: Session, data: Prospect) -> Prospect:
 
 def get_prospects(session: Session, user_id: int):
     return session.exec(select(Prospect).where(Prospect.user_id == user_id)).all()
+
+def delete_prospect(session: Session, prospect_id: int, user_id: int):
+    prospect = session.get(models.Prospect, prospect_id)
+    if not prospect or prospect.user_id != user_id:
+        raise HTTPException(status_code=404, detail="Prospect not found")
+    session.delete(prospect)
+    session.commit()
+
+
+def delete_prospect(session: Session, prospect_id: int, user_id: int) -> bool:
+    statement = select(Prospect).where(Prospect.id == prospect_id, Prospect.user_id == user_id)
+    prospect = session.exec(statement).first()
+    if not prospect:
+        return False
+    session.delete(prospect)
+    session.commit()
+    return True
 
 
 # ---------- TEMPLATE ----------
