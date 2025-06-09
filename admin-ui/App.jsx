@@ -1,7 +1,5 @@
-// src/App.jsx
-
 import React from 'react'
-import { Container, Navbar, Card } from 'react-bootstrap'
+import { Container, Navbar, Nav, Card } from 'react-bootstrap'
 
 function App() {
   return (
@@ -26,5 +24,4 @@ function App() {
   )
 }
 
-// ← Make sure we export App as default!
 export default App
