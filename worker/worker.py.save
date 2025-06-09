@@ -1,0 +1,75 @@
+"""
+worker.py
+
+This background script processes scheduled emails:
+
+- Loads pending scheduled emails due at or before now
+- Sends emails using dummy logic (replace with SMTP later)
+- Updates sent status, timestamp, or retries on failure
+- Enforces retry logic with max attempts and delay
+
+To run manually:
+    python worker/worker.py
+
+Can also be used in cron or systemd service.
+"""
+
+from datetime import datetime, timedelta
+from sqlmodel import Session, create_engine, select
+
+from app.models import ScheduledEmail
+rom app.config import DATABASE_URL
+
+# Connect to the same DB as FastAPI
+engine = create_engine(DATABASE_URL, echo=False)
+
+# Settings
+MAX_RETRIES = 3
+RETRY_DELAY_MINUTES = 15
+
+# Simulated email sending logic (replace with SMTP later)
+def try_send_email(email: ScheduledEmail) -> bool:
+    # For now, simulate 90% success rate
+    import random
+    return random.random() < 0.9
+
+def process_due_emails():
+    now = datetime.now()
+
+    with Session(engine) as session:
+        due_emails = session.exec(
+            select(ScheduledEmail).where(
+                ScheduledEmail.scheduled_for <= now,
+                ScheduledEmail.status == "pending"
+            )
+        ).all()
+
+        print(f"Found {len(due_emails)} due emails")
+
+        for email in due_emails:
+            success = try_send_email(email)
+
+            if success:
+                print(f"[✓] Sent to prospect {email.prospect_id}")
+                email.status = "sent"
+                email.sent_at = now
+            else:
+                email.retry_count += 1
+                email.last_attempt = now
+                if email.retry_count >= MAX_RETRIES:
+                    email.status = "failed"
+                    print(f"[X] Failed to send to {email.prospect_id} after {MAX_RETRIES} retries")
+                else:
+                    # Reschedule
+                    delay = timedelta(minutes=RETRY_DELAY_MINUTES * email.retry_count)
+                    email.scheduled_for = now + delay
+                    print(f"[!] Retry scheduled in {delay} for {email.prospect_id}")
+
+            session.add(email)
+
+        session.commit()
+
+# Entry point
+if __name__ == "__main__":
+    print(f"Worker started at {datetime.now()}")
+    process_due_emails()
