@@ -17,8 +17,8 @@
       <td>{{ p.email }}</td>
       <td>{{ p.language }}</td>
       <td>
-        <!-- Delete button: HTMX will call DELETE and swap this table -->
         <button
+          type="button"
           class="btn btn-sm btn-danger"
           hx-delete="/prospects/{{ p.id }}"
           hx-target="#prospect-list"

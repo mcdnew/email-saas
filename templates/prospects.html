@@ -5,12 +5,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Prospects Dashboard</title>
-  <!-- Bootstrap 5 CSS from CDN -->
+  <!-- Bootstrap 5 CSS -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
-  <!-- HTMX for AJAX-like behavior without JS bundler -->
+  <!-- HTMX -->
   <script src="https://unpkg.com/htmx.org@1.9.2"></script>
 </head>
 <body class="bg-light">
@@ -23,7 +23,7 @@
   <div class="container">
     <h2>Prospects</h2>
 
-    <!-- HTMX-enabled form: POSTs to /prospects/, swaps the list -->
+    <!-- HTMX-enabled FORM -->
     <form
       class="row g-2 mb-4"
       hx-post="/prospects/"
@@ -71,7 +71,7 @@
       </div>
     </form>
 
-    <!-- This div holds the list; HTMX will swap its innerHTML -->
+    <!-- List container -->
     <div id="prospect-list">
       {% include "_prospect_list.html" %}
     </div>

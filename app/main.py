@@ -10,7 +10,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel, create_engine, Session
-from datetime import datetime
 
 from app import models, crud, scheduler, auth
 from app.config import DATABASE_URL
@@ -24,7 +23,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Jinja2 templates directory
 templates = Jinja2Templates(directory="templates")
 
-# CORS (for dev)
+# CORS for local dev
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,12 +36,11 @@ app.add_middleware(
 def on_startup():
     SQLModel.metadata.create_all(engine)
 
-# DB session dependency
 def get_session():
     with Session(engine) as session:
         yield session
 
-# --- API: Create & List Prospects ---
+# --- Prospects API & HTMX endpoints ---
 
 @app.post("/prospects/", response_class=HTMLResponse)
 async def create_prospect(
@@ -50,12 +48,8 @@ async def create_prospect(
     session: Session = Depends(get_session),
     user=Depends(auth.get_current_user),
 ):
-    """
-    If JSON -> return JSON.
-    If form (HTMX) -> return HTML fragment for the updated list.
-    """
     content_type = request.headers.get("content-type", "")
-    # JSON-case
+    # JSON client
     if content_type.startswith("application/json"):
         data = await request.json()
         prospect = models.Prospect(
@@ -70,7 +64,7 @@ async def create_prospect(
         scheduler.schedule_sequence_for_prospect(session, prospect, user.id)
         return JSONResponse(prospect.dict())
 
-    # HTMX form-case
+    # HTMX form client
     form = await request.form()
     prospect = models.Prospect(
         user_id=user.id,
@@ -83,10 +77,10 @@ async def create_prospect(
     prospect = crud.create_prospect(session, prospect)
     scheduler.schedule_sequence_for_prospect(session, prospect, user.id)
 
-    # Re-fetch and return the HTML fragment
     prospects = crud.get_prospects(session, user.id)
     return templates.TemplateResponse(
-        "_prospect_list.html", {"request": request, "prospects": prospects}
+        "_prospect_list.html",
+        {"request": request, "prospects": prospects},
     )
 
 @app.delete("/prospects/{prospect_id}", response_class=HTMLResponse)
@@ -96,15 +90,13 @@ async def delete_prospect(
     session: Session = Depends(get_session),
     user=Depends(auth.get_current_user),
 ):
-    """
-    Deletes a prospect and returns the updated HTML fragment.
-    """
     success = crud.delete_prospect(session, prospect_id, user.id)
     if not success:
         raise HTTPException(status_code=404, detail="Not found")
     prospects = crud.get_prospects(session, user.id)
     return templates.TemplateResponse(
-        "_prospect_list.html", {"request": request, "prospects": prospects}
+        "_prospect_list.html",
+        {"request": request, "prospects": prospects},
     )
 
 @app.get("/prospects-page", response_class=HTMLResponse)
@@ -113,9 +105,6 @@ def prospects_page(
     session: Session = Depends(get_session),
     user=Depends(auth.get_current_user),
 ):
-    """
-    Renders the full Prospects page.
-    """
     prospects = crud.get_prospects(session, user.id)
     return templates.TemplateResponse(
         "prospects.html",
