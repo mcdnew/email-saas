@@ -3,4 +3,8 @@ uvicorn
 sqlmodel
 python-dotenv
 jinja2
+fastapi-users[sqlalchemy]
+jinja2
+htmx
+piccolo-admin
 
