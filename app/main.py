@@ -18,6 +18,10 @@ It will:
     - scheduler.py (scheduling logic)
     - auth.py (dummy login context)
 """
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+from starlette.requests import Request
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,6 +34,11 @@ from app.config import DATABASE_URL
 # ----------------- FastAPI + DB Setup -----------------
 engine = create_engine(DATABASE_URL, echo=False)
 app = FastAPI()
+# Serve files in the ./static directory at /static
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Point Jinja2 at our templates folder
+templates = Jinja2Templates(directory="templates")
 
 # Enable CORS to allow browser-based clients (optional for dev)
 app.add_middleware(
@@ -73,6 +82,19 @@ def create_prospect(data: models.Prospect, session: Session = Depends(get_sessio
 @app.get("/prospects/")
 def list_prospects(session: Session = Depends(get_session), user=Depends(auth.get_current_user)):
     return crud.get_prospects(session, user.id)
+# -----------Add a new route for the Prospects dashboard page (below your existing routes)----
+@app.get("/prospects-page", response_class=HTMLResponse)
+def prospects_page(request: Request, session: Session = Depends(get_session), user=Depends(auth.get_current_user)):
+    """
+    Render the Prospects dashboard with Bootstrap + HTMX.
+    """
+    # Fetch prospects for this user
+    prospects = crud.get_prospects(session, user.id)
+    return templates.TemplateResponse("prospects.html", {
+        "request": request,
+        "prospects": prospects,
+        "user": user
+    })
 
 # ----------------- Templates -----------------
 @app.post("/templates/")
