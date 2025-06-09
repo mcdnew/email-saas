@@ -1,0 +1,33 @@
+{# templates/_prospect_list.html #}
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Language</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in prospects %}
+    <tr>
+      <td>{{ p.title or "" }}</td>
+      <td>{{ p.name }}</td>
+      <td>{{ p.email }}</td>
+      <td>{{ p.language }}</td>
+      <td>
+        <!-- Delete button: HTMX will call DELETE and swap this table -->
+        <button
+          class="btn btn-sm btn-danger"
+          hx-delete="/prospects/{{ p.id }}"
+          hx-target="#prospect-list"
+          hx-swap="innerHTML"
+        >
+          Delete
+        </button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
