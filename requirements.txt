@@ -1,2 +1,6 @@
-Jinja2
+fastapi
+uvicorn
+sqlmodel
+python-dotenv
+jinja2
 
